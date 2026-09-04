@@ -1,0 +1,133 @@
+name: kibana
+title: Kibana
+icon: kibana
+type: service
+scalable: false
+
+labels:
+- kibana
+- visualization
+- observability
+
+options:
+- version: '9.5'
+  tag: '9.5.3'
+  default: true
+
+endpoints:
+- name: kibana
+  ports:
+  - name: http
+    number: 5601
+    protocol: http
+    main: true
+
+tokens:
+- name: security_encryption_key
+  generate:
+    regex: '[A-Za-z0-9]{64}'
+- name: saved_objects_encryption_key
+  generate:
+    regex: '[A-Za-z0-9]{64}'
+- name: reporting_encryption_key
+  generate:
+    regex: '[A-Za-z0-9]{64}'
+
+env:
+- name: SERVER_PUBLICBASEURL
+  value: '{{service.url}}'
+- name: INTERACTIVESETUP_ENABLED
+  value: 'false'
+- name: XPACK_SECURITY_ENCRYPTIONKEY
+  value: '{{security_encryption_key}}'
+- name: XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY
+  value: '{{saved_objects_encryption_key}}'
+- name: XPACK_REPORTING_ENCRYPTIONKEY
+  value: '{{reporting_encryption_key}}'
+- name: TELEMETRY_ENABLED
+  value: 'false'
+
+links:
+- name: elasticsearch
+  title: Elasticsearch
+  required: true
+  env:
+  - name: ELASTICSEARCH_HOSTS
+    value: '["http://{{link.host}}:{{link.port}}"]'
+  - name: ELASTICSEARCH_USERNAME
+    value: kibana_system
+  - name: ELASTICSEARCH_PASSWORD
+    value: '{{link.tokens.kibana_password}}'
+    secret: true
+  selectors:
+  - type: search
+    labels:
+    - elasticsearch
+
+helm:
+  name: wodby
+  source: oci://registry-1.docker.io/wodby/stateless
+  chart: oci://registry-1.docker.io/wodby/stateless
+  version: 0.2.0
+  valueMappings:
+    replicas: replicaCount
+    nameOverride: nameOverride
+    fullnameOverride: fullnameOverride
+    serviceAccountName: serviceAccount.name
+    serviceAccountCreate: serviceAccount.create
+    strategy: strategy.type
+    minReady: minReadySeconds
+    progressDeadline: progressDeadlineSeconds
+    shutdownGracePeriod: terminationGracePeriodSeconds
+  values:
+  - name: containerName
+    value: kibana
+  - name: containerPorts
+    value:
+    - name: http
+      containerPort: 5601
+      protocol: TCP
+  - name: securityContext
+    value:
+      allowPrivilegeEscalation: false
+      runAsNonRoot: true
+      runAsUser: 1000
+  - name: startupProbe
+    value:
+      httpGet:
+        path: /api/status
+        port: http
+      failureThreshold: 60
+      periodSeconds: 10
+  - name: readinessProbe
+    value:
+      httpGet:
+        path: /api/status
+        port: http
+      periodSeconds: 10
+      timeoutSeconds: 5
+  - name: livenessProbe
+    value:
+      tcpSocket:
+        port: http
+      initialDelaySeconds: 30
+      periodSeconds: 20
+
+workloads:
+- name: main
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: '{{helm.release}}'
+  kind: deployment
+  primary: true
+  helm:
+    labels: podLabels
+    annotations: podAnnotations
+    volumes: extraVolumes
+  containers:
+  - name: kibana
+    image: docker.elastic.co/kibana/kibana
+    helm:
+      resources: resources
+      env: envVars
+      mounts: extraVolumeMounts
