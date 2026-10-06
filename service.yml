@@ -1,5 +1,6 @@
 name: kibana
 title: Kibana
+guidance: GUIDANCE.md
 icon: kibana
 type: service
 scalable: false
