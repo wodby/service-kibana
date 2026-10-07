@@ -36,7 +36,7 @@ tokens:
 
 env:
 - name: SERVER_PUBLICBASEURL
-  value: '{{service.url}}'
+  value: '{{service.primaryURL}}'
 - name: INTERACTIVESETUP_ENABLED
   value: 'false'
 - name: XPACK_SECURITY_ENCRYPTIONKEY
