@@ -41,10 +41,13 @@ env:
   value: 'false'
 - name: XPACK_SECURITY_ENCRYPTIONKEY
   value: '{{security_encryption_key}}'
+  secret: true
 - name: XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY
   value: '{{saved_objects_encryption_key}}'
+  secret: true
 - name: XPACK_REPORTING_ENCRYPTIONKEY
   value: '{{reporting_encryption_key}}'
+  secret: true
 - name: TELEMETRY_ENABLED
   value: 'false'
 
