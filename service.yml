@@ -13,6 +13,7 @@ labels:
 options:
 - version: '9.5'
   tag: '9.5.6'
+  digest: sha256:c7ed45da5c3cfea020fc6c99ce027f4d21d19dab330379c5115d5eb95f6ecebc
   default: true
 
 endpoints:
